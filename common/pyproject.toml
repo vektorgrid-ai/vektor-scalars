@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "assistant-worker-common"
+version = "0.1.0"
+dependencies = [
+    "fastapi",
+    "requests",
+    "uvicorn"
+]
+
+[tool.setuptools]
+py-modules = ["registration", "runtime", "health"]

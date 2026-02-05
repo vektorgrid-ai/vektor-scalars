@@ -1,0 +1,96 @@
+services:
+  common:
+    build: ./common
+    image: workers-common # Build to a named image for reuse
+
+  tts:
+    build: ./tts
+    depends_on:
+      - common
+    #restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      CORE_URL: "http://core:5264"
+      WORKER_ENDPOINT: "http://tts:8000"
+      PORT: 8000
+    networks:
+      - aiassistant
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  stt:
+    build: ./stt
+    depends_on:
+      - common
+    #restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      CORE_URL: "http://core:5264"
+      WORKER_ENDPOINT: "http://stt:8001"
+      PORT: 8001
+    networks:
+      - aiassistant
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  router:
+    build: ./router
+    depends_on:
+      - common
+    #restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      CORE_URL: "http://core:5264"
+      WORKER_ENDPOINT: "http://router:8002"
+      PORT: 8002
+    networks:
+      - aiassistant
+    volumes:
+      - ollama_models:/ollama
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  llm:
+    build: ./llm
+    depends_on:
+      - common
+    #restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      CORE_URL: "http://core:5264"
+      WORKER_ENDPOINT: "http://llm:8003"
+      PORT: 8003
+    networks:
+      - aiassistant
+    volumes:
+      - ollama_models:/ollama
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+networks:
+  aiassistant:
+    external: true
+
+volumes:
+  ollama_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./ollama_models
