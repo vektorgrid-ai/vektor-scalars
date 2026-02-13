@@ -27,6 +27,9 @@ async def infer_llm(data: dict):
     # Convert tools to Ollama tool schema
     tools = convert_tools(tool_schemas)
 
+    print("Received Messages:", json.dumps(chat_context.get("events", []), indent=2))
+    print("Built Messages:", json.dumps(messages, indent=2))
+
     # Run Ollama Chat
     if not check_model_exists(model):
         print(f"Model {model} not found. Pulling...")
@@ -83,21 +86,38 @@ def build_messages(user_prompt, chat_context, context):
 
     # Prior conversation (ignore timestamps/chat_id)
     for event in chat_context.get("events", []):
-        role = "assistant" if event.get("$type") == "assistant" else "user"
-        text = event.get("text")
-        if text:
-            messages.append({
-                "role": role,
-                "content": text
-            })
+        message = convert_event_to_message(event)
+        if message:
+            messages.append(message)
 
-    # New user input
-    messages.append({
-        "role": "user",
-        "content": user_prompt
-    })
+#    if user_prompt is not None and user_prompt != "":
+#        messages.append({
+#            "role": "user",
+#            "content": user_prompt
+#        })
 
     return messages
+
+
+def convert_event_to_message(event):
+    """Convert a chat event to an Ollama message format."""
+    event_type = event.get("$type")
+
+    if event_type == "tool_result":
+        return {
+            "role": "tool",
+            "tool_name": event.get("tool_name", ""),
+            "content": json.dumps(event.get("json_result", {}))
+        }
+
+    text = event.get("text")
+    if text:
+        return {
+            "role": event_type,
+            "content": text
+        }
+
+    return None
 
 def convert_tools(tool_schemas):
     tools = []
