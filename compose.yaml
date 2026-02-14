@@ -33,8 +33,14 @@ services:
       CORE_URL: "http://core:5264"
       WORKER_ENDPOINT: "http://stt:8001"
       PORT: 8001
+      WHISPER_DEVICE: "cpu"
+      WHISPER_COMPUTE_TYPE: "int8"
+      WHISPER_BEAM_SIZE: "5"
     networks:
       - aiassistant
+    volumes:
+      # Mount to HF_HOME, TRANSFORMERS_CACHE
+      - whisper_models:/opt/assistant/.cache
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
       interval: 30s
@@ -94,3 +100,9 @@ volumes:
       type: none
       o: bind
       device: ./ollama_models
+  whisper_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./whisper_models

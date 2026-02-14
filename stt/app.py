@@ -1,12 +1,14 @@
 import base64
+import os
 import time
 import numpy as np
 from faster_whisper import WhisperModel
 
-MODEL = "small"
-COMPUTE_TYPE = "int8"
-BEAM_SIZE = 5
-whisper = WhisperModel(MODEL, device="cpu", compute_type=COMPUTE_TYPE)
+MODEL = os.environ.get("WHISPER_MODEL", "small")
+DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")
+COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")
+BEAM_SIZE = int(os.environ.get("WHISPER_BEAM_SIZE", "5"))
+whisper = WhisperModel(MODEL, device=DEVICE, compute_type=COMPUTE_TYPE)
 
 async def infer_stt(data: dict):
     start = time.perf_counter()
